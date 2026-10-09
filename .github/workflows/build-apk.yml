@@ -1,0 +1,38 @@
+
+name: Crear APK Android
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Descomprimir proyecto Android
+        run: |
+          mkdir -p project
+          unzip -o MiniZombieAndroidProject.zip -d project
+
+      - name: Construir APK
+        run: gradle -p project assembleDebug
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: mini-zombie-apk
+          path: project/app/build/outputs/apk/debug/app-debug.apk
