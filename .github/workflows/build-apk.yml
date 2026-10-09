@@ -27,6 +27,8 @@ jobs:
         run: |
           mkdir -p project
           unzip -o MiniZombieAndroidProject.zip -d project
+                - name: Usar HTML actualizado
+        run: cp mini_zombie_survival_multijugador_alpha.html project/app/src/main/assets/index.html
 
       - name: Construir APK
         run: gradle -p project assembleDebug
