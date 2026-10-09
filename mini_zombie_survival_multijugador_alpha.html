@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Mini Zombie Survival 3D Evolution</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#10151b;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;overflow:hidden;touch-action:none}
+#wrap{height:100dvh;display:flex;flex-direction:column;max-width:1000px;margin:auto;background:#18212a}
+header{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#0c1116;font-size:13px;gap:8px}
+header strong{font-size:15px;letter-spacing:.3px}#stats{text-align:right;white-space:nowrap}
+#game{width:100%;flex:1;min-height:0;display:block;background:#9ac5c9;touch-action:none}
+#controls{padding:9px 10px calc(9px + env(safe-area-inset-bottom));background:#0c1116;display:flex;justify-content:space-between;align-items:center;gap:7px}
+.cluster{display:flex;gap:7px;align-items:center}
+button{border:1px solid #53616c;background:#253440;color:#fff;border-radius:15px;min-width:53px;height:56px;font-size:22px;font-weight:800;box-shadow:0 3px 0 #101820;touch-action:none}
+button:active,.held{background:#e8a23b;color:#17202a;transform:translateY(2px);box-shadow:0 1px 0 #101820}
+#fire{min-width:70px;background:#a63b37;font-size:14px}#jump{font-size:13px}#sound{height:38px;min-width:42px;font-size:17px;border-radius:12px}
+#hint{font-size:10px;color:#aebbc5;text-align:center;line-height:1.3}
+#overlay,#shopOverlay{position:absolute;inset:0;background:#071018d9;display:flex;align-items:center;justify-content:center;padding:16px;z-index:5}
+#panel,#shopPanel{max-width:350px;max-height:90dvh;overflow:auto;width:100%;background:#1d2a35;border:1px solid #647783;border-radius:20px;padding:20px;text-align:center;box-shadow:0 12px 45px #0008}
+#panel{max-width:350px;background:#1d2a35;border:1px solid #647783;border-radius:20px;padding:22px;text-align:center;box-shadow:0 12px 45px #0008}
+#panel h1{margin:0 0 8px;font-size:clamp(26px,7vw,38px);letter-spacing:1px;text-shadow:0 3px 0 #0008,0 0 22px #5be0ff99;animation:titlePulse 2.8s ease-in-out infinite}@keyframes titlePulse{50%{text-shadow:0 3px 0 #0008,0 0 32px #ff8d4599;transform:scale(1.025)}}#panel p{line-height:1.45;color:#d1dce2}
+#overlay{background:linear-gradient(180deg,#07101855 0%,#071018b8 45%,#050a10f2 100%)}#panel{max-width:420px;background:linear-gradient(150deg,#172c3bdc,#08121deF 75%);backdrop-filter:blur(7px);border-color:#70d9e8;box-shadow:0 18px 65px #000c,0 0 35px #23c9f044,inset 0 1px #ffffff30}
+.menuButtons{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:15px 0}.menuButtons button{height:auto;min-height:48px;padding:10px 8px;font-size:14px;border-radius:12px}.menuButtons #start{grid-column:1/-1;min-height:55px;font-size:19px;background:linear-gradient(#ffd06a,#e18a25);color:#17202a;border:0;box-shadow:0 4px 0 #8a4d16}
+.settingRow{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;margin:10px 0;font-size:13px;color:#dbe7ee}.settingRow select,.settingRow input{max-width:58%;accent-color:#e8a23b;background:#263b49;color:white;border:1px solid #617b89;border-radius:9px;padding:8px;min-width:90px}.settingRow input[type=range]{padding:0;min-width:100px}
+#start{height:auto;padding:12px 24px;min-width:160px;font-size:16px;background:#e8a23b;color:#17202a}
+#shopPanel button:disabled{opacity:.45;filter:grayscale(.6)}#shopPanel h2{margin:0 0 8px;font-size:23px}#shopPanel p{color:#d1dce2;font-size:13px}#shopPanel .shopNote{font-size:11px;color:#aebbc5}
+.shopItem{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;padding:9px 0;border-bottom:1px solid #40515d;font-size:13px}
+.shopItem small{display:block;color:#aebbc5;font-size:10px;margin-top:3px}.shopItem button{height:auto;min-width:92px;padding:8px;font-size:11px;border-radius:10px;background:#345b45}
+#closeShop{height:auto;padding:10px 14px;min-width:0;font-size:13px;background:#e8a23b;color:#17202a;margin-top:8px}#shopBtn{height:36px;min-width:38px;font-size:17px;border-radius:10px}
+.hidden{display:none!important}
+#weapon{height:42px;min-width:86px;padding:0 8px;font-size:11px;border-radius:12px;background:#354b5a}
+@media(max-width:430px){#controls{gap:5px;padding-left:6px;padding-right:6px}.cluster{gap:5px}button{min-width:40px;height:49px;font-size:19px}#fire{min-width:55px;font-size:12px}#jump{font-size:11px;min-width:50px}#weapon{min-width:70px;padding:0 5px;font-size:10px;height:40px}#hint{display:none}header strong{font-size:12px}#stats{font-size:10px}}
+
+#onlineLobby{position:absolute;z-index:20;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,390px);padding:18px;background:#101820f5;border:1px solid #59c5e8;border-radius:16px;box-shadow:0 12px 50px #000b;color:#fff;text-align:center}
+#onlineLobby h2{margin:0 0 8px;font-size:22px}#onlineLobby p{font-size:13px;line-height:1.4;color:#c7d6df}
+#onlineLobby input{width:100%;padding:12px;border-radius:9px;border:1px solid #536675;background:#202d38;color:white;margin:6px 0}
+#onlineLobby button{border:0;border-radius:9px;padding:11px 12px;background:#2e9fc4;color:#fff;font-weight:800;margin:4px;cursor:pointer}
+#onlineLobby button.secondary{background:#354653}#onlineStatus{font-size:12px;color:#9ee8c8;min-height:18px;margin:8px 0}
+#roomCode{font-size:17px;font-weight:900;letter-spacing:1px;color:#ffe28a;word-break:break-all}
+#onlineToggle{position:absolute;z-index:15;right:8px;top:44px;padding:7px 10px;border:1px solid #5dc5e8;border-radius:8px;background:#10212c;color:#fff;font-weight:800}
+#remoteBadge{position:absolute;z-index:12;left:8px;top:44px;background:#10212cdd;padding:6px 9px;border-radius:8px;font-size:12px;color:#9ee8c8;display:none}
+</style>
+</head>
+<body>
+<div id="wrap">
+<header><strong>🧟 MINI ZOMBIE SURVIVAL 3D</strong><span id="stats">❤️ 100　🔫 0　🪙 0</span><button id="shopBtn" aria-label="Abrir tienda">🛒</button><button id="sound" aria-label="Activar o silenciar sonido">🔊</button></header>
+<canvas id="game" aria-label="Juego de zombis"></canvas>
+<div id="controls">
+ <div class="cluster"><button id="left" aria-label="Mover izquierda">◀</button><button id="right" aria-label="Mover derecha">▶</button></div>
+ <div id="hint">Muévete · salta<br>¡sobrevive!</div>
+ <div class="cluster"><button id="jump">SALTAR</button><button id="fire">🔫 FUEGO</button></div>
+ <button id="weapon" aria-label="Cambiar arma">🔫 PISTOLA</button>
+</div></div>
+<div id="overlay"><div id="panel"><h1>🧟 ZOMBIE<br>SURVIVAL</h1><p id="menuSubtitle">Sobrevive, mejora tu equipo y enfréntate a hordas cada vez más peligrosas.</p>
+<div class="menuButtons"><button id="start">▶ JUGAR</button><button id="menuShop">🛒 TIENDA</button><button id="upgradeCharacter">🦾 MEJORAR PERSONAJE</button></div>
+<div class="settingRow"><label for="difficulty">☠️ Dificultad</label><select id="difficulty"><option value="easy">Fácil</option><option value="normal" selected>Normal</option><option value="hard">Difícil</option><option value="nightmare">Pesadilla</option></select></div>
+<div class="settingRow"><label for="volume">🔊 Volumen</label><input id="volume" type="range" min="0" max="100" value="65"><span id="volumeValue">65%</span></div>
+<div class="settingRow"><label for="language">🌐 Idioma / Language</label><select id="language"><option value="es" selected>Español</option><option value="en">English</option></select></div>
+<p id="menuWallet">🪙 Monedas: 0 · ❤️ Vida: 100</p></div></div>
+<div id="shopOverlay" class="hidden"><div id="shopPanel"><h2>🛒 TIENDA DE ARMAS</h2><p id="shopCoins">🪙 Monedas: 0</p><p class="shopNote">Compra mejoras. El arma equipada no se pierde al cambiar de nivel.</p>
+<div class="shopItem"><span>🔫 Pistola <small>Incluida</small></span><button data-buy="0">EQUIPAR</button></div>
+<div class="shopItem"><span>💥 Escopeta <small>Precio: 40 🪙</small></span><button data-buy="1">COMPRAR</button></div>
+<div class="shopItem"><span>🎯 Rifle <small>Precio: 70 🪙</small></span><button data-buy="2">COMPRAR</button></div>
+<div class="shopItem"><span>❤️ Curación +25 <small>Precio: 25 🪙</small></span><button data-buy="heal">COMPRAR</button></div>
+<div class="shopItem"><span>⚡ Mejora de daño <small>Precio: 60 🪙</small></span><button data-buy="damage">COMPRAR</button></div>
+<p id="shopMessage">Gana monedas eliminando zombis.</p><button id="closeShop">VOLVER AL JUEGO</button></div></div>
+
+<button id="onlineToggle" type="button">🌐 MULTIJUGADOR</button>
+<div id="remoteBadge">🟢 Jugador conectado</div>
+<div id="onlineLobby">
+  <h2>🌐 Cooperativo online</h2>
+  <p>Prueba inicial para conectar dos teléfonos por internet. Ambos deben abrir esta misma página con conexión activa.</p>
+  <button id="createRoom">CREAR SALA</button>
+  <div id="roomCodeWrap" style="display:none"><p>Comparte este código con tu compañero:</p><div id="roomCode"></div><button id="copyRoom" class="secondary">COPIAR CÓDIGO</button></div>
+  <p>O entra a la sala de tu compañero:</p>
+  <input id="joinCode" placeholder="Pega aquí el código del anfitrión" autocomplete="off">
+  <button id="joinRoom">UNIRME A SALA</button>
+  <div id="onlineStatus">Desconectado. Crea o únete a una sala.</div>
+  <button id="closeOnline" class="secondary">CERRAR</button>
+</div>
+
+<script>
+(()=> {
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),stats=document.getElementById('stats'),overlay=document.getElementById('overlay'),startBtn=document.getElementById('start'),soundBtn=document.getElementById('sound');
+const keys={left:false,right:false,fire:false};let W=800,H=420,dpr=1,running=false,last=0,spawnTimer=0,bullets=[],zombies=[],particles=[],score=0,kills=0,level=1,coins=0,gameTime=0,hurtFlash=0,levelFlash=0,shake=0,bossSpawned=false,damageBoost=0,shopWasRunning=false,shopOpen=false;const ownedWeapons=[true,false,false];let hitStop=0;
+const weapons=[
+ {name:'PISTOLA',icon:'🔫',cool:.25,damage:1,speed:650,spread:0,shots:1,sound:'pistol'},
+ {name:'ESCOPETA',icon:'💥',cool:.68,damage:1,speed:500,spread:.22,shots:5,sound:'shotgun'},
+ {name:'RIFLE',icon:'🎯',cool:.105,damage:1,speed:820,spread:.025,shots:1,sound:'rifle'}
+];let weaponIndex=0;
+let audio=null,soundOn=true,volumeLevel=.65,musicTimer=null,musicStep=0,musicMood='normal',difficulty='normal',language='es',menuUpgrades=0;
+const player={x:100,y:0,w:36,h:60,vx:0,vy:0,hp:100,maxHp:100,face:1,onGround:true,cool:0,invuln:0};
+const ground=()=>H-61;
+function resize(){const r=canvas.getBoundingClientRect();dpr=Math.min(window.devicePixelRatio||1,2);W=Math.max(320,r.width);H=Math.max(280,r.height);canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);player.y=Math.min(player.y||ground()-player.h,ground()-player.h)}
+window.addEventListener('resize',resize);resize();
+function initAudio(){if(!audio){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;audio=new AC()}if(audio.state==='suspended')audio.resume()}
+function tone(freq,duration,type='square',volume=.04,when=0){if(!soundOn||!audio)return;const t=audio.currentTime+when,o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0001,volume*volumeLevel),t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(audio.destination);o.start(t);o.stop(t+duration+.03)}
+function sfx(name){if(!soundOn||!audio)return;
+ if(name==='shoot'){tone(180,.07,'sawtooth',.035);tone(90,.09,'square',.025,.025)}
+ if(name==='pistol'){tone(190,.055,'square',.035);tone(95,.08,'sawtooth',.025,.025)}
+ if(name==='shotgun'){tone(105,.16,'sawtooth',.07);tone(58,.19,'square',.04,.025)}
+ if(name==='rifle'){tone(260,.035,'square',.028);tone(135,.055,'sawtooth',.02,.015)}
+ if(name==='hit'){tone(115,.1,'square',.045);tone(72,.12,'sawtooth',.025,.03)}
+ if(name==='kill'){tone(440,.07,'triangle',.04);tone(660,.1,'triangle',.035,.06)}
+ if(name==='hurt'){tone(95,.22,'sawtooth',.06);tone(65,.2,'square',.035,.08)}
+ if(name==='coin'){tone(740,.07,'triangle',.04);tone(990,.1,'triangle',.035,.06)}
+ if(name==='level'){[440,554,659,880].forEach((n,i)=>tone(n,.23,'triangle',.045,i*.11))}
+ if(name==='boss'){[110,82,110,65].forEach((n,i)=>tone(n,.28,'sawtooth',.05,i*.16))}
+ if(name==='over'){[330,277,220,165].forEach((n,i)=>tone(n,.28,'triangle',.04,i*.17))}
+}
+function musicBeat(){
+ if(!soundOn||!audio||!running)return;
+ const danger=player.hp<35, boss=zombies.some(z=>z.boss), mood=boss?'boss':danger?'danger':'normal';
+ if(mood!==musicMood){musicMood=mood;musicStep=0}
+ const normal=[196,0,247,0,294,0,247,0,165,0,220,0,262,0,220,0];
+ const tense=[110,0,130,147,0,110,165,0,98,0,123,147,0,98,147,0];
+ const bossline=[82,0,82,110,0,98,0,73,82,0,110,0,65,0,98,0];
+ const seq=boss?bossline:danger?tense:normal, n=seq[musicStep%seq.length];
+ if(n)tone(n,boss?.16:.2,boss?'sawtooth':'triangle',boss?.035:.018);
+ if(musicStep%4===0 && !boss)tone((danger?55:82),.25,'sine',.025);
+ musicStep++;musicTimer=setTimeout(musicBeat,boss?190:danger?250:330);
+}
+function bindHold(id,key){const b=document.getElementById(id);const down=e=>{e.preventDefault();keys[key]=true;b.classList.add('held');initAudio()};const up=e=>{e.preventDefault();keys[key]=false;b.classList.remove('held')};b.addEventListener('pointerdown',down);['pointerup','pointercancel','pointerleave'].forEach(n=>b.addEventListener(n,up))}
+bindHold('left','left');bindHold('right','right');bindHold('fire','fire');
+document.getElementById('jump').addEventListener('pointerdown',e=>{e.preventDefault();initAudio();if(running&&player.onGround){player.vy=-490;player.onGround=false;tone(330,.08,'triangle',.025)}});
+document.addEventListener('keydown',e=>{if(['ArrowLeft','a','ArrowRight','d',' ','ArrowUp','w'].includes(e.key))e.preventDefault();if(e.key==='ArrowLeft'||e.key==='a')keys.left=true;if(e.key==='ArrowRight'||e.key==='d')keys.right=true;if(e.key===' ')keys.fire=true;if((e.key==='ArrowUp'||e.key==='w')&&player.onGround&&running){player.vy=-490;player.onGround=false}});
+document.addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='a')keys.left=false;if(e.key==='ArrowRight'||e.key==='d')keys.right=false;if(e.key===' ')keys.fire=false});
+soundBtn.addEventListener('click',()=>{soundOn=!soundOn;soundBtn.textContent=soundOn?'🔊':'🔇';if(soundOn){initAudio();tone(550,.08,'triangle',.03);if(running)musicBeat()}else if(musicTimer)clearTimeout(musicTimer)});
+const weaponBtn=document.getElementById('weapon');
+function updateWeaponLabel(){const w=weapons[weaponIndex];weaponBtn.textContent=w.icon+' '+w.name;}
+const shopOverlay=document.getElementById('shopOverlay'),shopCoins=document.getElementById('shopCoins'),shopMessage=document.getElementById('shopMessage');let shopReturn='game';
+const translations={es:{play:'▶ JUGAR',shop:'🛒 TIENDA',upgrade:'🦾 MEJORAR PERSONAJE',subtitle:'Sobrevive, mejora tu equipo y enfréntate a hordas cada vez más peligrosas.',difficulty:'☠️ Dificultad',easy:'Fácil',normal:'Normal',hard:'Difícil',nightmare:'Pesadilla',language:'🌐 Idioma / Language',back:'VOLVER AL MENÚ',shopTitle:'🛒 TIENDA DE ARMAS',coins:'🪙 Monedas: ',life:'❤️ Vida: ',upgradeMsg:'Mejora permanente: +20 de vida máxima y más resistencia.',buyUpgrade:'MEJORAR · 80 🪙',notEnough:'Necesitas 80 monedas.',bought:'¡Personaje mejorado!'},en:{play:'▶ PLAY',shop:'🛒 SHOP',upgrade:'🦾 UPGRADE CHARACTER',subtitle:'Survive, upgrade your gear, and face increasingly dangerous hordes.',difficulty:'☠️ Difficulty',easy:'Easy',normal:'Normal',hard:'Hard',nightmare:'Nightmare',language:'🌐 Language',back:'BACK TO MENU',shopTitle:'🛒 WEAPON SHOP',coins:'🪙 Coins: ',life:'❤️ Health: ',upgradeMsg:'Permanent upgrade: +20 max health and more resilience.',buyUpgrade:'UPGRADE · 80 🪙',notEnough:'You need 80 coins.',bought:'Character upgraded!'}};
+function tr(k){return (translations[language]||translations.es)[k]||k}
+function updateMenuText(){document.getElementById('start').textContent=tr('play');document.getElementById('jump').textContent=language==='es'?'SALTAR':'JUMP';document.getElementById('fire').textContent=language==='es'?'🔫 FUEGO':'🔫 FIRE';document.getElementById('hint').innerHTML=language==='es'?'Muévete · salta<br>¡sobrevive!':'Move · jump<br>survive!';document.getElementById('weapon').setAttribute('aria-label',language==='es'?'Cambiar arma':'Change weapon');document.getElementById('menuShop').textContent=tr('shop');document.getElementById('upgradeCharacter').textContent=tr('upgrade');document.getElementById('menuSubtitle').textContent=tr('subtitle');document.querySelector('label[for=difficulty]').textContent=tr('difficulty');document.querySelector('#difficulty option[value=easy]').textContent=tr('easy');document.querySelector('#difficulty option[value=normal]').textContent=tr('normal');document.querySelector('#difficulty option[value=hard]').textContent=tr('hard');document.querySelector('#difficulty option[value=nightmare]').textContent=tr('nightmare');document.querySelector('label[for=language]').textContent=tr('language');document.querySelector('#shopPanel h2').textContent=tr('shopTitle');document.getElementById('closeShop').textContent=shopReturn==='menu'?tr('back'):(language==='es'?'VOLVER AL JUEGO':'BACK TO GAME');const rows=document.querySelectorAll('.shopItem');if(language==='en'){rows[0].innerHTML='<span>🔫 Pistol <small>Included</small></span><button data-buy="0">EQUIP</button>';rows[1].innerHTML='<span>💥 Shotgun <small>Price: 40 🪙</small></span><button data-buy="1">BUY</button>';rows[2].innerHTML='<span>🎯 Rifle <small>Price: 70 🪙</small></span><button data-buy="2">BUY</button>';rows[3].innerHTML='<span>❤️ Heal +25 <small>Price: 25 🪙</small></span><button data-buy="heal">BUY</button>';rows[4].innerHTML='<span>⚡ Damage upgrade <small>Price: 60 🪙</small></span><button data-buy="damage">BUY</button>'}else{rows[0].innerHTML='<span>🔫 Pistola <small>Incluida</small></span><button data-buy="0">EQUIPAR</button>';rows[1].innerHTML='<span>💥 Escopeta <small>Precio: 40 🪙</small></span><button data-buy="1">COMPRAR</button>';rows[2].innerHTML='<span>🎯 Rifle <small>Precio: 70 🪙</small></span><button data-buy="2">COMPRAR</button>';rows[3].innerHTML='<span>❤️ Curación +25 <small>Precio: 25 🪙</small></span><button data-buy="heal">COMPRAR</button>';rows[4].innerHTML='<span>⚡ Mejora de daño <small>Precio: 60 🪙</small></span><button data-buy="damage">COMPRAR</button>'}updateMenuWallet()}
+function updateMenuWallet(){document.getElementById('menuWallet').textContent=tr('coins')+coins+' · '+tr('life')+player.hp+'/'+player.maxHp}
+function refreshShop(message=(language==='es'?'Gana monedas eliminando zombis.':'Earn coins by eliminating zombies.')){shopCoins.textContent=tr('coins')+coins;shopMessage.textContent=message;document.querySelectorAll('[data-buy]').forEach(btn=>{const id=btn.dataset.buy;if(language==='en'){if(id==='0')btn.textContent=ownedWeapons[0]?(weaponIndex===0?'EQUIPPED':'EQUIP'):'BUY';else if(id==='1'||id==='2')btn.textContent=ownedWeapons[Number(id)]?(weaponIndex===Number(id)?'EQUIPPED':'EQUIP'):'BUY';else if(id==='heal')btn.textContent=player.hp>=player.maxHp?'FULL':'BUY';else if(id==='damage')btn.textContent=damageBoost?'PURCHASED':'BUY';}if(id==='heal'){btn.textContent=player.hp>=100?'LLENO':'COMPRAR';btn.disabled=coins<25||player.hp>=player.maxHp}else if(id==='damage'){btn.textContent=damageBoost?'COMPRADO':'COMPRAR';btn.disabled=coins<60||damageBoost>0}else{const n=Number(id),price=n===1?40:n===2?70:0;btn.textContent=ownedWeapons[n]?(weaponIndex===n?'EQUIPADA':'EQUIPAR'):'COMPRAR';btn.disabled=!ownedWeapons[n]&&coins<price;}})}
+function openShop(from='game'){shopReturn=from;shopWasRunning=running;shopOpen=true;running=false;shopOverlay.classList.remove('hidden');refreshShop();updateMenuText();if(musicTimer)clearTimeout(musicTimer)}
+function closeShop(){shopOpen=false;shopOverlay.classList.add('hidden');if(shopReturn==='menu'){overlay.classList.remove('hidden');updateMenuWallet();return}if(shopWasRunning){running=true;last=performance.now();musicBeat();requestAnimationFrame(loop)}}
+document.getElementById('shopBtn').addEventListener('click',()=>{initAudio();openShop('game')});document.getElementById('menuShop').addEventListener('click',()=>openShop('menu'));
+document.getElementById('difficulty').addEventListener('change',e=>{difficulty=e.target.value;saveProgress()});
+document.getElementById('volume').addEventListener('input',e=>{volumeLevel=Number(e.target.value)/100;document.getElementById('volumeValue').textContent=e.target.value+'%';soundOn=volumeLevel>0;soundBtn.textContent=soundOn?'🔊':'🔇';saveProgress()});
+document.getElementById('language').addEventListener('change',e=>{language=e.target.value;updateMenuText();saveProgress()});
+document.getElementById('upgradeCharacter').addEventListener('click',()=>{if(coins>=80){coins-=80;menuUpgrades++;player.maxHp+=20;player.hp=Math.min(player.maxHp,player.hp+20);saveProgress();updateMenuWallet();document.getElementById('menuSubtitle').textContent=tr('bought')+' ('+tr('upgradeMsg')+')';tone(660,.12,'triangle',.04)}else{document.getElementById('menuSubtitle').textContent=tr('notEnough')}});
+function saveProgress(){try{localStorage.setItem('miniZombieSave',JSON.stringify({coins,ownedWeapons,weaponIndex,damageBoost,menuUpgrades,difficulty,language,volumeLevel}))}catch(e){}}
+function loadProgress(){try{const d=JSON.parse(localStorage.getItem('miniZombieSave')||'{}');coins=Number(d.coins)||0;if(Array.isArray(d.ownedWeapons))d.ownedWeapons.forEach((v,i)=>{if(i<3)ownedWeapons[i]=!!v});weaponIndex=Math.max(0,Math.min(2,Number(d.weaponIndex)||0));if(!ownedWeapons[weaponIndex])weaponIndex=0;damageBoost=Number(d.damageBoost)||0;menuUpgrades=Number(d.menuUpgrades)||0;player.maxHp=100+menuUpgrades*20;player.hp=player.maxHp;difficulty=d.difficulty||'normal';language=d.language||'es';volumeLevel=typeof d.volumeLevel==='number'?d.volumeLevel:.65;document.getElementById('difficulty').value=difficulty;document.getElementById('language').value=language;document.getElementById('volume').value=Math.round(volumeLevel*100);document.getElementById('volumeValue').textContent=Math.round(volumeLevel*100)+'%';soundOn=volumeLevel>0; soundBtn.textContent=soundOn?'🔊':'🔇';weapons.forEach(w=>w.damage=1+damageBoost);updateWeaponLabel();updateMenuText()}catch(e){}}
+loadProgress();
+document.getElementById('closeShop').addEventListener('click',closeShop);
+document.getElementById('shopPanel').addEventListener('click',e=>{const btn=e.target.closest('[data-buy]');if(!btn)return;const id=btn.dataset.buy;let msg='';if(id==='heal'){if(coins>=25&&player.hp<100){coins-=25;player.hp=Math.min(player.maxHp,player.hp+25);sfx('level');msg=language==='es'?'¡Recuperaste 25 puntos de vida!':'You recovered 25 health points!'}else msg='No tienes suficientes monedas o ya tienes vida completa.'}else if(id==='damage'){if(coins>=60&&!damageBoost){coins-=60;damageBoost=1;weapons.forEach(w=>w.damage+=1);sfx('level');msg=language==='es'?'¡Daño mejorado! Tus armas hacen más daño.':'Damage upgraded! All weapons hit harder.'}else msg='No puedes comprar esta mejora ahora.'}else{const n=Number(id),price=n===1?40:n===2?70:0;if(ownedWeapons[n]){weaponIndex=n;msg=(language==='es'?'Arma equipada: ':'Weapon equipped: ')+weapons[n].name}else if(coins>=price){coins-=price;ownedWeapons[n]=true;weaponIndex=n;msg=(language==='es'?'¡Compraste ':'You bought ')+weapons[n].name+'!'}else msg=language==='es'?'Te faltan monedas.':'Not enough coins.'}updateWeaponLabel();refreshShop(msg);updateStats();updateMenuWallet();saveProgress();});
+weaponBtn.addEventListener('click',()=>{weaponIndex=(weaponIndex+1)%weapons.length;updateWeaponLabel();initAudio();tone([440,554,659][weaponIndex],.09,'triangle',.03);});
+updateWeaponLabel();
+function start(){initAudio();score=0;kills=0;level=1;weapons.forEach((w,i)=>w.damage=1+damageBoost);shopOpen=false;shopOverlay.classList.add('hidden');score=0;gameTime=0;bullets=[];zombies=[];particles=[];weaponIndex=0;updateWeaponLabel();player.x=90;player.y=ground()-player.h;player.hp=player.maxHp;player.vy=0;player.face=1;player.cool=0;player.invuln=0;spawnTimer=.6;running=true;last=performance.now();levelFlash=1.8;musicMood='normal';musicStep=0;overlay.classList.add('hidden');document.querySelector('#panel h1').innerHTML='🧟 ZOMBIE<br>SURVIVAL';updateMenuWallet();saveProgress();if(musicTimer)clearTimeout(musicTimer);musicBeat();requestAnimationFrame(loop)}
+startBtn.addEventListener('click',start);document.getElementById('menuWallet').textContent='🪙 Monedas: '+coins+' · ❤️ Vida: '+player.hp+'/'+player.maxHp;
+function spawnZombie(){
+ const boss=level%3===0&&!bossSpawned&&kills>0&&kills%10===0;if(boss)bossSpawned=true;
+ const fromLeft=Math.random()<.5, type=boss?'boss':(Math.random()<.16?'flyer':Math.random()<.28?'jumper':'walker'), bossKind=boss?['brute','toxic','armored'][Math.floor(Math.random()*3)]:'none';
+ const scale=boss?1.75:type==='flyer'?.88:type==='jumper'?1.12:1;
+ const hp=boss?(difficulty==='nightmare'?22:difficulty==='hard'?17:13):type==='flyer'?2:type==='jumper'?3:1+(Math.random()<(difficulty==='easy'?.12:difficulty==='nightmare'?.48:.22)+level*.015?1:0);
+ zombies.push({x:fromLeft?-55:W+55,y:type==='flyer'?ground()-150:ground()-(49*scale),baseY:ground()-(49*scale),w:(36+Math.random()*7)*scale,h:49*scale,hp,maxhp:hp,speed:(type==='flyer'?48:type==='jumper'?42:23+Math.random()*18+level*3)*(difficulty==='easy'?.72:difficulty==='hard'?1.28:difficulty==='nightmare'?1.62:1)*(boss?.72:1),hit:0,boss,type,bossKind,phase:Math.random()*6,jumpCd:.7+Math.random()*1.3,vy:0,dir:fromLeft?1:-1});
+}
+function shoot(){
+ if(player.cool>0)return;
+ const w=weapons[weaponIndex], baseX=player.x+player.w/2+player.face*24, baseY=player.y+25;
+ for(let i=0;i<w.shots;i++){
+   const offset=w.shots===1?0:(i-(w.shots-1)/2)*w.spread;
+   const angle=(player.face===1?0:Math.PI)+offset;
+   bullets.push({x:baseX,y:baseY,vx:Math.cos(angle)*w.speed,vy:Math.sin(angle)*w.speed,life:1.2,damage:w.damage,weapon:weaponIndex});
+ }
+ player.cool=w.cool;
+ sfx(w.sound);
+ const count=weaponIndex===1?13:weaponIndex===2?3:5;
+ for(let i=0;i<count;i++)particles.push({x:baseX,y:baseY,vx:player.face*(35+Math.random()*(weaponIndex===1?180:100)),vy:(Math.random()-.5)*(weaponIndex===1?150:80),life:weaponIndex===1?.2:.13,color:weaponIndex===1?'#ffb05e':'#ffe28a',size:weaponIndex===1?4:3});
+}
+function updateStats(){stats.textContent=`❤️ ${player.hp}　🔫 ${kills}　🪙 ${coins}`;}
+function update(dt){
+ gameTime+=dt;player.cool-=dt;player.invuln=Math.max(0,player.invuln-dt);hurtFlash=Math.max(0,hurtFlash-dt);levelFlash=Math.max(0,levelFlash-dt);shake=Math.max(0,shake-dt*20);
+ player.vx=(keys.right?1:0)-(keys.left?1:0);if(player.vx)player.face=Math.sign(player.vx);player.x+=player.vx*(225+level*2+menuUpgrades*4)*dt;player.x=Math.max(4,Math.min(W-player.w-4,player.x));
+ player.vy+=1150*dt;player.y+=player.vy*dt;if(player.y+player.h>=ground()){player.y=ground()-player.h;player.vy=0;player.onGround=true}else player.onGround=false;
+ if(keys.fire)shoot();
+ spawnTimer-=dt;if(spawnTimer<=0){spawnZombie();spawnTimer=Math.max(.42,1.45-level*.08)+Math.random()*.38}
+ bullets.forEach(b=>{b.x+=b.vx*dt;b.y+=(b.vy||0)*dt;b.life-=dt});bullets=bullets.filter(b=>b.life>0&&b.x>-40&&b.x<W+40&&b.y>-30&&b.y<H+30);
+ zombies.forEach(z=>{const dx=(player.x+player.w/2)-(z.x+z.w/2);if(Math.abs(dx)>2)z.x+=Math.sign(dx)*z.speed*dt;z.phase+=dt*5; if(z.type==='flyer'){z.y=ground()-145+Math.sin(gameTime*3+z.phase)*24;z.x+=Math.sin(gameTime*2+z.phase)*12*dt}else if(z.type==='jumper'){z.jumpCd-=dt;if(z.jumpCd<=0&&z.y>=ground()-z.h-1){z.vy=-390;z.jumpCd=1.25+Math.random()*.6}z.vy+=950*dt;z.y+=z.vy*dt;if(z.y+z.h>=ground()){z.y=ground()-z.h;z.vy=0}}else if(z.type==='walker'||z.boss){z.y=ground()-z.h}z.hit=Math.max(0,z.hit-dt);
+ if(Math.abs(dx)<z.w*.65+player.w*.35&&Math.abs((player.y+player.h)-(z.y+z.h))<85&&player.invuln<=0){player.hp=Math.max(0,player.hp-(difficulty==='easy'?4:difficulty==='hard'?10:difficulty==='nightmare'?14:7));player.invuln=.65;hurtFlash=.24;shake=10;hitStop=.06;sfx('hurt');for(let i=0;i<12;i++)particles.push({x:player.x+player.w/2,y:player.y+player.h*.48,vx:(Math.random()-.5)*190,vy:(Math.random()-.5)*170,life:.25+Math.random()*.25,color:['#ff4242','#ffb1a1','#fff'][i%3],size:3+Math.random()*4});}
+ bullets.forEach(b=>{if(!b.dead&&b.x>z.x&&b.x<z.x+z.w&&b.y>z.y&&b.y<z.y+z.h){b.dead=true;z.hp-=b.damage||1;z.hit=.13;score+=5;sfx('hit');if(z.hp<=0){z.dead=true;kills++;score+=z.boss?100:15;const earned=z.boss?25:5+Math.floor(Math.random()*4);coins+=earned;saveProgress();sfx('kill');sfx('coin');shake=Math.max(shake,z.boss?12:3);for(let i=0;i<(z.boss?32:18);i++)particles.push({x:z.x+z.w/2,y:z.y+z.h/2,vx:(Math.random()-.5)*(z.boss?300:220),vy:(Math.random()-.8)*(z.boss?220:170),life:.35+Math.random()*.55,color:['#8ed16b','#d6f06a','#ffd166','#fff'][i%4],size:2+Math.random()*5});for(let i=0;i<3;i++)particles.push({x:z.x+z.w/2,y:z.y+z.h/3,vx:(Math.random()-.5)*50,vy:-60-Math.random()*60,life:.7,color:'#ffd166',size:3,text:'+🪙'});if(kills%10===0){level++;levelFlash=2.1;bossSpawned=false;player.hp=Math.min(100,player.hp+15);sfx('level');for(let i=0;i<24;i++)particles.push({x:W/2,y:H*.35,vx:(Math.random()-.5)*260,vy:-Math.random()*180,life:1,color:['#ffd166','#fff','#7de0c3'][i%3],size:4})}}}});
+ });zombies=zombies.filter(z=>!z.dead);bullets=bullets.filter(b=>!b.dead);
+ particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=180*dt;p.life-=dt});particles=particles.filter(p=>p.life>0);
+ updateStats();updateMenuWallet();saveProgress();
+ if(player.hp<=0){running=false;sfx('over');saveProgress();if(musicTimer)clearTimeout(musicTimer);overlay.classList.remove('hidden');document.querySelector('#panel h1').textContent='💀 ¡Fin del juego!';document.querySelector('#panel p').textContent=`Llegaste al nivel ${level}, eliminaste ${kills} zombis y lograste ${score} puntos.`;startBtn.textContent='VOLVER A JUGAR'}
+}
+function rounded(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function draw(){
+ const t=gameTime, night=level%3===2, lab=level%3===0;
+ let sky=ctx.createLinearGradient(0,0,0,H);if(lab){sky.addColorStop(0,'#243d56');sky.addColorStop(1,'#6d9a9c')}else if(night){sky.addColorStop(0,'#101b3c');sky.addColorStop(1,'#604c70')}else{sky.addColorStop(0,'#63b8d0');sky.addColorStop(1,'#d9dfad')}
+ ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+ // cinematic haze, drifting ash and distant light shafts
+ const haze=ctx.createLinearGradient(0,H*.18,0,H);haze.addColorStop(0,'#72c8ff00');haze.addColorStop(1,night?'#e06b6630':'#b9ffdc22');ctx.fillStyle=haze;ctx.fillRect(0,0,W,H);
+ for(let i=0;i<34;i++){let px=((i*137-gameTime*(12+i%4)* (i%2?1:-1))%W+W)%W,py=(i*53+Math.sin(gameTime+i)*12)%(H*.8);ctx.fillStyle=i%3===0?'#ffcf8b66':'#d5f7ff44';ctx.beginPath();ctx.arc(px,py,i%5===0?2:1,0,Math.PI*2);ctx.fill()}
+ // distant silhouettes with atmospheric depth
+ for(let i=0;i<5;i++){let bx=((i*W/4-gameTime*8)% (W+100))-30;ctx.fillStyle='#101d2b55';ctx.beginPath();ctx.moveTo(bx,ground()-10);ctx.lineTo(bx+24,ground()-90-(i%3)*24);ctx.lineTo(bx+52,ground()-10);ctx.fill()}
+ if(night){ctx.fillStyle='#f9edc5';ctx.beginPath();ctx.arc(W*.8,H*.14,19,0,Math.PI*2);ctx.fill();for(let i=0;i<34;i++){ctx.fillStyle='#ffffff99';ctx.fillRect((i*83)%W,(i*37)%(H*.43),2,2)}}
+ // parallax buildings / lab tanks / forest
+ for(let i=0;i<9;i++){let x=i*W/7-(t*(level%3===1?10:20)%100),bh=75+(i*37%95);if(lab){rounded(x,ground()-bh-24,54,bh+24,7,'#294958');ctx.fillStyle='#6bd4d0';ctx.globalAlpha=.3;ctx.fillRect(x+8,ground()-bh-12,38,bh-4);ctx.globalAlpha=1;ctx.strokeStyle='#a1ffff';ctx.lineWidth=2;ctx.strokeRect(x+8,ground()-bh-12,38,bh-4)}else if(night){ctx.fillStyle='#282c4c';ctx.fillRect(x,ground()-bh-20,58,bh+20);ctx.fillStyle='#f6d88a';for(let wy=ground()-bh;wy<ground()-30;wy+=19)for(let wx=x+8;wx<x+52;wx+=17)if((wx+wy+i)%3>0)ctx.fillRect(wx,wy,6,8)}else{ctx.fillStyle='#547e79';ctx.fillRect(x,ground()-bh-20,60,bh+20);ctx.fillStyle='#c4d7b4';for(let wy=ground()-bh;wy<ground()-30;wy+=20)ctx.fillRect(x+10,wy,7,9)}}
+ if(level%3===2){for(let i=0;i<6;i++){let x=(i*W/5-(t*26%W));ctx.fillStyle='#1c5549';ctx.beginPath();ctx.moveTo(x,ground()-20);ctx.lineTo(x+24,ground()-120-(i%3)*22);ctx.lineTo(x+49,ground()-20);ctx.fill();ctx.fillRect(x+21,ground()-20,6,40)}}
+ // ground, cracks, props
+ let floor=ctx.createLinearGradient(0,ground(),0,H);floor.addColorStop(0,lab?'#647f86':night?'#41465a':'#65716b');floor.addColorStop(1,'#151d25');ctx.fillStyle=floor;ctx.fillRect(0,ground(),W,H-ground());ctx.fillStyle=lab?'#7be1dc':'#d7c66f';ctx.fillRect(0,ground()+7,W,3);
+ for(let x=0;x<W;x+=74){ctx.fillStyle='#87908a';ctx.fillRect(x+(t*32%74),ground()+28,27,3)}
+ if(lab){ctx.fillStyle='#3e9c9a';ctx.fillRect(W*.68,ground()-38,42,38);ctx.fillStyle='#b5ffff';ctx.fillRect(W*.7,ground()-32,30,5)}
+ else{ctx.fillStyle='#34433b';ctx.fillRect(W*.73,ground()-26,35,26);ctx.fillStyle='#6d8a6b';ctx.fillRect(W*.75,ground()-31,24,6)}
+ // shadows and actors
+ ctx.fillStyle='#0004';ctx.beginPath();ctx.ellipse(player.x+18,ground()+2,24,5,0,0,Math.PI*2);ctx.fill();
+ if(player.invuln<=0||Math.floor(t*18)%2===0)drawPlayer(player.x,player.y,player.face);
+ zombies.forEach(z=>{ctx.fillStyle='#0004';ctx.beginPath();ctx.ellipse(z.x+z.w/2,ground()+2,z.w*.65,5,0,0,Math.PI*2);ctx.fill();drawZombie(z)});
+ bullets.forEach(b=>{ctx.fillStyle=b.weapon===1?'#ff9d4d':b.weapon===2?'#8ee8ff':'#ffdc72';ctx.beginPath();ctx.ellipse(b.x,b.y,b.weapon===1?5:8,b.weapon===1?4:3,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(b.x-5,b.y-1,6,2)});
+ particles.forEach(p=>{ctx.globalAlpha=Math.min(1,Math.max(0,p.life*2));ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,p.size||4,p.size||4);ctx.globalAlpha=1});
+ // HUD
+ rounded(10,10,Math.min(W-20,210),43,10,'#101a25dd');ctx.fillStyle='#fff';ctx.font='bold 12px system-ui';ctx.fillText(`NIVEL ${level}  ·  ${['CIUDAD','NOCHE','LABORATORIO'][((level-1)%3)]}`,20,27);
+ ctx.fillStyle='#45545d';ctx.fillRect(20,34,140,8);ctx.fillStyle=player.hp>35?'#73db79':'#ff5555';ctx.fillRect(20,34,140*player.hp/100,8);ctx.fillStyle='#fff';ctx.font='10px system-ui';ctx.fillText('VIDA',166,42);
+ rounded(Math.max(10,W-132),10,122,28,9,'#101a25dd');ctx.fillStyle='#fff';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText(weapons[weaponIndex].icon+' '+weapons[weaponIndex].name,Math.max(71,W-71),28);ctx.textAlign='left';
+ if(levelFlash>0){ctx.globalAlpha=Math.min(1,levelFlash);ctx.textAlign='center';ctx.font='900 28px system-ui';ctx.lineWidth=4;ctx.strokeStyle='#18212a';ctx.strokeText(`¡NIVEL ${level}!`,W/2,H*.26);ctx.fillStyle='#ffe28a';ctx.fillText(`¡NIVEL ${level}!`,W/2,H*.26);ctx.textAlign='left';ctx.globalAlpha=1}
+ if(hurtFlash>0){ctx.fillStyle='#ff303044';ctx.fillRect(0,0,W,H)}
+}
+function drawPlayer(x,y,face){ctx.save();const moving=Math.abs(player.vx)>.01,run=gameTime*13,leg=Math.sin(run)*(moving?8:1.5),bob=Math.abs(Math.sin(run*2))*(moving&&player.onGround?2:0);ctx.translate(x+18,y+bob);ctx.scale(face,1);
+ // soft rim light and body shadow
+ ctx.shadowColor='#63dcff66';ctx.shadowBlur=8;
+ // legs with animated stride
+ ctx.strokeStyle='#202833';ctx.lineWidth=8;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-6,42);ctx.lineTo(-8+leg,54);ctx.moveTo(6,42);ctx.lineTo(10-leg,54);ctx.stroke();ctx.shadowBlur=0;rounded(-15+leg,52,13,7,3,'#111820');rounded(5-leg,52,15,7,3,'#111820');
+ // torso, armor plates and highlights
+ const body=ctx.createLinearGradient(-14,20,14,47);body.addColorStop(0,'#4cb3e7');body.addColorStop(.55,'#246a9c');body.addColorStop(1,'#143e64');rounded(-14,20,28,27,6,body);rounded(-8,24,16,18,3,'#e0a548');ctx.fillStyle='#f5d06d';ctx.fillRect(-5,27,10,3);ctx.fillStyle='#a9efff';ctx.fillRect(-11,22,5,12);
+ // head and hair
+ ctx.fillStyle='#f1c39b';ctx.beginPath();ctx.arc(0,12,12,0,Math.PI*2);ctx.fill();ctx.fillStyle='#30251f';ctx.beginPath();ctx.arc(0,8,12,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(-12,7,24,4);
+ ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(4,12,3.4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#17202a';ctx.beginPath();ctx.arc(5,12,1.7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#56372d';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(1,18);ctx.lineTo(6,18);ctx.stroke();
+ // gun arm and weapon
+ ctx.strokeStyle='#f1c39b';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(7,26);ctx.lineTo(17,29+Math.sin(gameTime*18)*.8);ctx.stroke();rounded(13,25,23,7,2,'#202a31');ctx.fillStyle='#9caeb8';ctx.fillRect(29,26,9,3);ctx.fillStyle='#ffcb6b';ctx.fillRect(35,26,3,2);ctx.restore()}
+function drawZombie(z){ctx.save();const flyer=z.type==='flyer',jumper=z.type==='jumper',boss=z.boss;ctx.translate(z.x,z.y);const c=boss?(z.bossKind==='toxic'?'#71d64e':z.bossKind==='armored'?'#9aa9b8':'#9b65c9'):z.hit?'#e1ff9a':flyer?'#71d9dc':jumper?'#c6a04d':'#75b45e';
+ const phase=gameTime*9+z.x*.045,walk=Math.sin(phase)*(boss?8:6),sway=Math.sin(phase+1.2)*3;ctx.shadowColor=boss?'#d19affaa':flyer?'#6af8ff99':'#a6ff7a66';ctx.shadowBlur=boss?18:flyer?13:7;
+ // soft rim-lit shadow body with glossy highlights
+ if(flyer){ctx.fillStyle='#25384b';ctx.beginPath();ctx.ellipse(z.w*.5,z.h*.47,z.w*.5,z.h*.26,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#a3faff';ctx.lineWidth=3;let flap=Math.sin(gameTime*15+z.phase)*13;ctx.beginPath();ctx.moveTo(z.w*.38,z.h*.38);ctx.lineTo(z.w*.08,z.h*.12+flap);ctx.lineTo(-z.w*.1,z.h*.32);ctx.moveTo(z.w*.62,z.h*.38);ctx.lineTo(z.w*.92,z.h*.12-flap);ctx.lineTo(z.w*1.1,z.h*.32);ctx.stroke()}
+ ctx.strokeStyle=c;ctx.lineWidth=boss?11:8;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(z.w*.32,z.h*.72);ctx.lineTo(z.w*.25+walk,z.h*.96);ctx.moveTo(z.w*.68,z.h*.72);ctx.lineTo(z.w*.76-walk,z.h*.96);ctx.stroke();
+ const body=ctx.createLinearGradient(0,z.h*.32,z.w,z.h*.8);body.addColorStop(0,boss?'#79509b':flyer?'#2c7f91':jumper?'#8a723b':'#416f4b');body.addColorStop(1,boss?'#342344':flyer?'#163b55':jumper?'#403321':'#1c382b');rounded(z.w*.12,z.h*.35,z.w*.76,z.h*.42,6,body);
+ ctx.fillStyle=c;ctx.beginPath();ctx.arc(z.w*.5,z.h*.22,z.boss?z.w*.38:z.w*.37,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff5d0';ctx.beginPath();ctx.ellipse(z.w*.36,z.h*.2,z.w*.13,z.h*.11,0,0,Math.PI*2);ctx.ellipse(z.w*.64,z.h*.2,z.w*.13,z.h*.11,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=flyer?'#4effff':'#ff4058';ctx.beginPath();ctx.arc(z.w*.36,z.h*.2,3.3,0,Math.PI*2);ctx.arc(z.w*.64,z.h*.2,3.3,0,Math.PI*2);ctx.fill();
+ rounded(z.w*.32,z.h*.33,z.w*.38,5,2,'#20252a');ctx.fillStyle='#fff';ctx.fillRect(z.w*.38,z.h*.33,4,3);ctx.fillRect(z.w*.55,z.h*.33,4,3);
+ ctx.strokeStyle=c;ctx.lineWidth=boss?10:7;ctx.beginPath();ctx.moveTo(z.w*.16,z.h*.43);ctx.lineTo(-z.w*.08+walk*.35,z.h*.58+walk);ctx.moveTo(z.w*.83,z.h*.43);ctx.lineTo(z.w*1.08+walk*.35,z.h*.53-walk);ctx.stroke();ctx.shadowBlur=0;
+ if(boss){ctx.fillStyle=z.bossKind==='toxic'?'#d8ff72':z.bossKind==='armored'?'#e2edf5':'#f0c8ff';ctx.beginPath();ctx.moveTo(z.w*.16,z.h*.05);ctx.lineTo(z.w*.27,-z.h*.15);ctx.lineTo(z.w*.38,z.h*.09);ctx.moveTo(z.w*.62,z.h*.09);ctx.lineTo(z.w*.75,-z.h*.15);ctx.lineTo(z.w*.84,z.h*.05);ctx.fill();ctx.fillStyle='#fff';ctx.font='bold 10px system-ui';ctx.fillText(z.bossKind==='toxic'?'TOXIC BOSS':z.bossKind==='armored'?'ARMORED BOSS':'BRUTE BOSS',z.w*.05,-8);if(z.bossKind==='armored'){ctx.strokeStyle='#d7e6f2';ctx.lineWidth=3;for(let q=0;q<4;q++){ctx.beginPath();ctx.moveTo(z.w*(.2+q*.18),z.h*.39);ctx.lineTo(z.w*(.2+q*.18),z.h*.18);ctx.stroke()}}if(z.bossKind==='toxic'){ctx.fillStyle='#b7ff66aa';for(let q=0;q<5;q++){ctx.beginPath();ctx.arc(z.w*(.1+q*.2),z.h*(.45+Math.sin(gameTime*4+q)*.05),3,0,Math.PI*2);ctx.fill()}}ctx.fillStyle='#35172f';ctx.fillRect(0,-17,z.w,4);ctx.fillStyle='#ff4d79';ctx.fillRect(0,-17,z.w*Math.max(0,z.hp/z.maxhp),4)}
+ if(jumper){ctx.fillStyle='#ffe58a';ctx.font='bold 9px system-ui';ctx.fillText('SALTA',z.w*.25,-4)}if(flyer){ctx.fillStyle='#b9ffff';ctx.beginPath();ctx.arc(z.w*.5,z.h*.05,3+Math.sin(gameTime*10)*1.5,0,7);ctx.fill()}
+ ctx.restore()}
+function loop(now){if(!running)return;const dt=Math.min((now-last)/1000,.035);last=now;update(dt);ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);draw();ctx.restore();if(running)requestAnimationFrame(loop)}
+player.y=ground()-player.h;zombies=[{x:W*.64,y:ground()-63,w:46,h:63,hp:4,maxhp:4,speed:0,hit:0,boss:false,type:'jumper',phase:1,jumpCd:1,vy:0},{x:W*.78,y:ground()-145,w:38,h:44,hp:2,maxhp:2,speed:0,hit:0,boss:false,type:'flyer',phase:2,jumpCd:1,vy:0},{x:W*.84,y:ground()-88,w:64,h:86,hp:13,maxhp:13,speed:0,hit:0,boss:true,bossKind:'toxic',type:'boss',phase:3,jumpCd:1,vy:0}];draw();
+function menuLoop(now){if(running)return;gameTime+=Math.min((now-(menuLoop.last||now))/1000,.04);menuLoop.last=now;draw();requestAnimationFrame(menuLoop)}requestAnimationFrame(menuLoop);
+
+// --- Online prototype: PeerJS/WebRTC ---
+const onlineLobby=document.getElementById('onlineLobby');
+const onlineStatus=document.getElementById('onlineStatus');
+const roomCodeEl=document.getElementById('roomCode');
+const roomCodeWrap=document.getElementById('roomCodeWrap');
+const remoteBadge=document.getElementById('remoteBadge');
+let onlinePeer=null, onlineConn=null, isOnlineHost=false, remotePlayer=null, netLastSend=0;
+function setOnlineStatus(msg){onlineStatus.textContent=msg;}
+function makeRoomCode(id){return id;}
+function loadPeerLibrary(){
+  return new Promise((resolve,reject)=>{
+    if(window.Peer){resolve();return;}
+    const s=document.createElement('script');
+    s.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+    s.onload=()=>window.Peer?resolve():reject(new Error('No se pudo cargar PeerJS'));
+    s.onerror=()=>reject(new Error('No se pudo cargar la librería de conexión. Revisa internet.'));
+    document.head.appendChild(s);
+  });
+}
+function attachConnection(conn){
+  onlineConn=conn;
+  conn.on('open',()=>{
+    remoteBadge.style.display='block';
+    setOnlineStatus('¡Conectado! Ya hay otro jugador en la sala.');
+    conn.send({kind:'hello',name:'Superviviente'});
+  });
+  conn.on('data',msg=>{
+    if(!msg||typeof msg!=='object')return;
+    if(msg.kind==='state' && msg.player){
+      remotePlayer=msg.player;
+    }else if(msg.kind==='hello'){
+      setOnlineStatus('Jugador conectado. La sincronización de movimiento está activa.');
+    }else if(msg.kind==='ping'){
+      conn.send({kind:'pong',t:msg.t});
+    }
+  });
+  conn.on('close',()=>{
+    onlineConn=null;remotePlayer=null;remoteBadge.style.display='none';
+    setOnlineStatus('El otro jugador se desconectó.');
+  });
+  conn.on('error',e=>setOnlineStatus('Error de conexión: '+(e&&e.type?e.type:'intenta de nuevo')));
+}
+document.getElementById('createRoom').addEventListener('click',async()=>{
+  try{
+    setOnlineStatus('Creando sala…');
+    await loadPeerLibrary();
+    if(onlinePeer)onlinePeer.destroy();
+    isOnlineHost=true;
+    onlinePeer=new Peer();
+    onlinePeer.on('open',id=>{
+      roomCodeEl.textContent=id;roomCodeWrap.style.display='block';
+      setOnlineStatus('Sala creada. Envía el código a tu compañero.');
+    });
+    onlinePeer.on('connection',conn=>attachConnection(conn));
+    onlinePeer.on('error',e=>setOnlineStatus('No se pudo crear la sala: '+(e.type||'error')));
+  }catch(e){setOnlineStatus(e.message||'No se pudo iniciar la conexión.');}
+});
+document.getElementById('joinRoom').addEventListener('click',async()=>{
+  const id=document.getElementById('joinCode').value.trim();
+  if(!id){setOnlineStatus('Primero pega el código de la sala.');return;}
+  try{
+    setOnlineStatus('Conectando con el anfitrión…');
+    await loadPeerLibrary();
+    if(onlinePeer)onlinePeer.destroy();
+    isOnlineHost=false;
+    onlinePeer=new Peer();
+    onlinePeer.on('open',()=>attachConnection(onlinePeer.connect(id,{reliable:true})));
+    onlinePeer.on('error',e=>setOnlineStatus('No se pudo conectar: '+(e.type||'error')+'. Comprueba el código.'));
+  }catch(e){setOnlineStatus(e.message||'No se pudo iniciar la conexión.');}
+});
+document.getElementById('copyRoom').addEventListener('click',async()=>{
+  const code=roomCodeEl.textContent;
+  try{await navigator.clipboard.writeText(code);setOnlineStatus('Código copiado. Envíalo por WhatsApp.');}
+  catch(e){setOnlineStatus('Mantén pulsado el código para copiarlo: '+code);}
+});
+document.getElementById('onlineToggle').addEventListener('click',()=>{onlineLobby.style.display='block';});
+document.getElementById('closeOnline').addEventListener('click',()=>{onlineLobby.style.display='none';});
+function drawRemotePlayer(){
+  if(!remotePlayer)return;
+  const rx=Math.max(0,Math.min(W-36,Number(remotePlayer.x)||0));
+  const ry=Math.max(0,Math.min(H-100,Number(remotePlayer.y)||ground()-60));
+  ctx.save();
+  ctx.globalAlpha=.92;
+  drawPlayer(rx,ry,Number(remotePlayer.face)||1);
+  ctx.fillStyle='#a9f4ff';ctx.font='bold 10px system-ui';ctx.textAlign='center';
+  ctx.fillText('JUGADOR 2',rx+18,ry-7);ctx.textAlign='left';ctx.restore();
+}
+const originalDraw=draw;
+draw=function(){originalDraw();drawRemotePlayer();};
+const originalLoop=loop;
+loop=function(now){
+  if(!running)return;
+  const dt=Math.min((now-last)/1000,.035);last=now;update(dt);
+  if(onlineConn&&onlineConn.open&&now-netLastSend>70){
+    netLastSend=now;
+    try{onlineConn.send({kind:'state',player:{x:player.x,y:player.y,face:player.face,hp:player.hp}});}catch(e){}
+  }
+  ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);draw();ctx.restore();
+  if(running)requestAnimationFrame(loop);
+};
+window.addEventListener('beforeunload',()=>{try{if(onlineConn)onlineConn.close();if(onlinePeer)onlinePeer.destroy();}catch(e){}});
+
+})();
+</script>
+</body></html>
